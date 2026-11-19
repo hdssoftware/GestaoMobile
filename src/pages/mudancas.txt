@@ -1,0 +1,19 @@
+Arquitetou refatoração modular para eliminar duplicação de códigoArquitetou refatoração modular para eliminar duplicação de códigoVou analisar a estrutura completa e depois otimizar. O arquivo tem ~1020 linhas, mas boa parte é repetição: os 4 blocos de <Select> (Marca/Grupo/Subgrupo/Fornecedor) são praticamente idênticos e sozinhos somam ~350 linhas. Vou extrair isso e outros blocos repetidos em componentes/hook/API separados — o resultado final some para menos de 1/3 do tamanho no arquivo principal, sem mudar nenhum comportamento.Examinou arquivo para otimizar código extensoExaminou arquivo para otimizar código extensoAgora o componente que elimina a maior duplicação — os 4 blocos <Select> quase idênticos:Analisou comportamentos de handlers e consolidou abordagem genéricaAnalisou comportamentos de handlers e consolidou abordagem genéricaAgora o modal de filtros, usando o FiltroSelect:Deliberou sobre refatoração de componentes para otimizar código volumosoDeliberou sobre refatoração de componentes para otimizar código volumosoAgora o arquivo principal, já bem mais enxuto:Condensou código e eliminou duplicações com sucessoCondensou código e eliminou duplicações com sucessoSintaxe válida em todos os arquivos. Agora vou copiar para outputs:Executou um comando, leu um arquivoExecutou um comando, leu um arquivoO que eu fiz, resumidamente:
+Estoque.jsx caiu de ~1020 para ~520 linhas, e o restante do código foi organizado em arquivos menores e reutilizáveis:
+
+components/FiltroSelect.jsx — o maior ganho. Os 4 blocos de <Select> (Marca, Grupo, Subgrupo, Fornecedor), que eram quase idênticos e somavam ~350 linhas duplicadas, viraram um único componente parametrizável.
+components/ModalFiltros.jsx e components/ModalFiliais.jsx — os dois modais saíram do JSX principal.
+components/ProdutoCard.jsx — o card de produto da lista, agora com React.memo (evita re-render de todos os cards quando só um estado de UI muda).
+components/ChipFiltro.jsx — os 4 chips de filtro ativo (Marca/Grupo/Subgrupo/Fornecedor) viraram um componente + 4 chamadas curtas.
+api/estoqueApi.js — todas as chamadas fetch centralizadas, incluindo a lógica de API_BASE_URL.
+styles/selectStyles.js — o objeto selectStyles, que antes era recriado a cada render, agora é um módulo estático.
+
+Comportamento preservado 1:1, incluindo os detalhes mais sutis:
+
+foco sequencial entre combos (Marca → Grupo → Subgrupo → Fornecedor) via Enter/Tab ou seleção;
+o caso especial do Grupo, que não foca o próximo campo diretamente (isso é feito pelo useEffect que espera o carregamento assíncrono dos subgrupos);
+histórico do navegador (popstate) para fechar modais com o botão "voltar";
+toda a lógica de busca local vs. busca na API.
+
+Validei a sintaxe de todos os arquivos com o parser do Babel (JSX) e não houve erros.
+Observação: os componentes ficaram em ./components/, a API em ./api/ e os estilos em ./styles/, todos relativos à pasta do Estoque.jsx. Se sua estrutura de pastas for diferente, é só ajustar os caminhos dos import.
